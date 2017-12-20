@@ -27,7 +27,7 @@ classdef FlightClass < handle
         %end
         
         function obj = setProperties(obj,seq,num,speed)
-            disp(['setNodesAndTimes, flight ',num2str(obj.sequential)]);
+            %disp(['setProperties, flight ',num2str(seq)]);
             obj.sequential = seq;
             obj.number = num;
             obj.max_taxi_speed = speed;
@@ -35,7 +35,7 @@ classdef FlightClass < handle
         end
         
         function obj = setNodesAndTimes(obj,n1,n2,t1,t2,tEarly)
-            disp(['setNodesAndTimes, flight ',num2str(obj.sequential)]);
+            %disp(['setNodesAndTimes, flight ',num2str(obj.sequential)]);
             obj.node_origin =n1;
             obj.node_dest  = n2;
             obj.time_origin  = t1;
@@ -45,7 +45,7 @@ classdef FlightClass < handle
         
         function obj = updatePosition(obj,n,t)
             disp(['updatePosition, flight ',num2str(obj.sequential)]);
-            obj.node_origin = n;
+            obj.node_origin = n;            
             obj.time_origin = t;
         end
         

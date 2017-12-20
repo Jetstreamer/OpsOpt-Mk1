@@ -39,6 +39,8 @@ classdef ScheduleClass < handle
         
         function setupRolingSchedule(obj)
             
+            airport = AirportClass;
+            airport.setupRolingAirport();
             f1 = FlightClass; % I know, not the most efficient, but it's more clear later on.
             f2 = FlightClass;
             f3 = FlightClass;
@@ -48,6 +50,13 @@ classdef ScheduleClass < handle
             f7 = FlightClass;
             f8 = FlightClass;
             
+            
+            [r1,r2,r3] = airport.calcShortestRoutes(f.node_origin, f.node_dest, f.max_taxi_speed);
+            f1.loadBasicRoutes(r1,r2,r3);
+            obj.addFlight(f1);
+            
+            
+            
             f1.setProperties( 1, 'Aircraft1',  8 ); % seq, num, speed
             f2.setProperties( 2, 'Aircraft2', 16 ); % seq, num, speed
             f3.setProperties( 3, 'Aircraft3', 16 ); % seq, num, speed
@@ -55,7 +64,7 @@ classdef ScheduleClass < handle
             f5.setProperties( 5, 'Aircraft5', 16 ); % seq, num, speed
             f6.setProperties( 6, 'Aircraft6',  8 ); % seq, num, speed
             f7.setProperties( 7, 'Aircraft7',  8 ); % seq, num, speed
-            f8.setProperties( 8, 'Aircraft8',  4 ); % seq, num, speed
+            f8.setProperties( 8, 'Aircraft8',  8 ); % seq, num, speed
             
             f1.setNodesAndTimes( 26, 15,  7, 0, 0 ); % n1, n2, t1, t2, tEarlyPushback
             f2.setNodesAndTimes( 24, 15,  6, 0, 0 ); % n1, n2, t1, t2, tEarlyPushback
@@ -66,34 +75,9 @@ classdef ScheduleClass < handle
             f7.setNodesAndTimes( 28, 26,  0, 0, 0 ); % n1, n2, t1, t2, tEarlyPushback
             f8.setNodesAndTimes( 28, 26,  3, 0, 0 ); % n1, n2, t1, t2, tEarlyPushback
             
-            airport = AirportClass;
-            airport.setupRolingAirport();
-            [r1,r2,r3] = airport.calcShortestRoutes(f1.node_origin, f1.node_dest, f1.max_taxi_speed);
-            f1.loadBasicRoutes(r1,r2,r3);
-            [r1,r2,r3] = airport.calcShortestRoutes(f2.node_origin, f2.node_dest, f2.max_taxi_speed);
-            f2.loadBasicRoutes(r1,r2,r3);
-            [r1,r2,r3] = airport.calcShortestRoutes(f3.node_origin, f3.node_dest, f3.max_taxi_speed);
-            f3.loadBasicRoutes(r1,r2,r3);
-            [r1,r2,r3] = airport.calcShortestRoutes(f4.node_origin, f4.node_dest, f4.max_taxi_speed);
-            f4.loadBasicRoutes(r1,r2,r3);
-            [r1,r2,r3] = airport.calcShortestRoutes(f5.node_origin, f5.node_dest, f5.max_taxi_speed);
-            f5.loadBasicRoutes(r1,r2,r3);
-            [r1,r2,r3] = airport.calcShortestRoutes(f6.node_origin, f6.node_dest, f6.max_taxi_speed);
-            f6.loadBasicRoutes(r1,r2,r3);
-            [r1,r2,r3] = airport.calcShortestRoutes(f7.node_origin, f7.node_dest, f7.max_taxi_speed);
-            f7.loadBasicRoutes(r1,r2,r3);
-            [r1,r2,r3] = airport.calcShortestRoutes(f8.node_origin, f8.node_dest, f8.max_taxi_speed);
-            f8.loadBasicRoutes(r1,r2,r3);
             
-            obj.addFlight(f1);
-            obj.addFlight(f2);
-            obj.addFlight(f3);
-            obj.addFlight(f4);
-            obj.addFlight(f5);
-            obj.addFlight(f6);
-            obj.addFlight(f7);
-            obj.addFlight(f8);
-            disp('setupRolingSchedule completed');
+            
+            
         end
         
         function setupSimpleAirportSchedule(obj)    
@@ -122,7 +106,10 @@ classdef ScheduleClass < handle
             f.loadBasicRoutes(r1,r2,r3);
             obj.addFlight(f);
 
-            disp('setupSimpleAirportSchedule completed');
+
+            
+            
+            
         end
         
         %function y = serialize

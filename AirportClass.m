@@ -3,6 +3,9 @@ classdef AirportClass < handle
     properties %(Access = private)
         nodes = [];
         links = [];
+        excel_filename char;     % parameters for shortest path tool
+        excel_number_nodes uint64; % parameters for shortest path tool
+        excel_number_links uint64; % parameters for shortest path tool
     end
     methods
         
@@ -16,6 +19,11 @@ classdef AirportClass < handle
             obj.links(4,:) = [4,5,250,1,1];
             obj.links(5,:) = [5,6,650,1,1];
             obj.links(6,:) = [6,1,750,1,1];
+            
+            obj.excel_filename = '\ShDistSimple.xlsm';
+            obj.excel_number_nodes = 7;
+            obj.excel_number_links = 13; 
+        
         end
         
         function obj = setupLessSimpleAirport(obj)
@@ -31,7 +39,13 @@ classdef AirportClass < handle
             obj.links(8,:) = [3,5,350,1,1]; % added two cross branches
         end
         
+        function obj = setupRolingAirport(obj)
+            
+            obj.excel_filename = '\ShDistRol.xlsm';
+            obj.excel_number_nodes = 29;
+            obj.excel_number_links = 41; 
         
+        end
         
         function obj = setupComplexAirport(obj)
             % empty!
@@ -52,15 +66,20 @@ classdef AirportClass < handle
         end
         
         
-        function [Route1,Route2,Route3] = calcShortestRoutes(obj,n1,n2)
+        
+        function [Route1,Route2,Route3] = calcShortestRoutes(obj,n1,n2,speed)
+            
+            
+            system('taskkill /F /IM EXCEL.EXE'); % DEBUG ONLY
+            
             
             disp(['calcShortestRoutes from ', num2str(n1), ' to ', num2str(n2), ' ...']);
             %SuppDem = zeros(size(obj.nodes));
-            SuppDem = zeros(6,1);
+            SuppDem = zeros(obj.excel_number_nodes-1,1);
             SuppDem(n1) = +1;
             SuppDem(n2) = -1;
             %SuppDem = SuppDem.';
-            disp (SuppDem);
+            %disp (SuppDem);
             
         %function [Route1,Route2,Route3] = calcShortestRoutes(SuppDem)
         %function [Route1,Route2,Route3] = ShortDist(SuppDem)
@@ -70,20 +89,18 @@ classdef AirportClass < handle
             % input must be a column vector representing the supply/demand
             % input is a vector full of zeros with 1 at starting node 
             % and -1 at destination node. Vector has 36 columns.
-            xlswrite('ShDistSimple.xlsm',SuppDem,'L2:L37') %write input in column
-
-
-
+            xlswrite(obj.excel_filename, SuppDem, strcat( 'L2:L', num2str(obj.excel_number_nodes))) %write input in column
+            
             %% - Determine First Route - %%
-            TrueDist    = xlsread('ShDistSimple.xlsm','E2:E13');
-            xlswrite('ShDistSimple.xlsm',TrueDist,'C2:C13') %get rid of penalty distance
+            TrueDist    = xlsread(obj.excel_filename,strcat( 'E2:E', num2str(obj.excel_number_links)));
+            xlswrite(obj.excel_filename,TrueDist, strcat( 'C2:C', num2str(obj.excel_number_links))) %get rid of penalty distance
 
             %% - link to Excel - %%
 
             % Create object
             ExcelApp = actxserver('Excel.Application'); % Show window.
             ExcelApp.Visible = 1; % Open file 
-            openedWorkbook = ExcelApp.Workbooks.Open(fullfile(pwd,'\ShDistSimple.xlsm'));
+            openedWorkbook = ExcelApp.Workbooks.Open(fullfile(pwd, strcat('\', obj.excel_filename)));
             % Run solver using macro
             ExcelApp.Run('SolverMacro');
             openedWorkbook.Save;    %save before closing excel
@@ -92,34 +109,35 @@ classdef AirportClass < handle
             %% - End of link - %%
 
             % read shortest route after running solver
-            OnRoute     = xlsread('ShDistSimple.xlsm','D2:D13'); %read distance with penalties
+            OnRoute     = xlsread(obj.excel_filename, strcat('D2:D', num2str(obj.excel_number_links))); %read distance with penalties
             OnRoute1    = OnRoute; %define first route
-            TotalDist1   = xlsread('ShDistSimple.xlsm','F2:F2'); % read total distance
+            TotalDist1   = xlsread(obj.excel_filename,'F2:F2'); % read total distance
 
             %% - Define route 1 vector with time stamps - %%
-            FromTo = xlsread('ShDistSimple.xlsm','A2:B13');
-            Periods = xlsread('ShDistSimple.xlsm','G2:G13'); % grab aircraft periods
+            FromTo = xlsread(obj.excel_filename,strcat('A2:B', num2str(obj.excel_number_links)));
+            Periods = xlsread(obj.excel_filename, strcat( 'E2:E', num2str(obj.excel_number_links))); % grab aircraft periods
+            Periods = Periods/(speed*10);
             Periods = ceil(Periods); % round up
-            OnRoute = xlsread('ShDistSimple.xlsm','D2:D13');
-            SuppDem = xlsread('ShDistSimple.xlsm','L2:L37');
+            OnRoute = xlsread(obj.excel_filename,strcat('D2:D', num2str(obj.excel_number_links)));
+            SuppDem = xlsread(obj.excel_filename,strcat( 'L2:L', num2str(obj.excel_number_nodes)));
             Route1 = RouteConvert(OnRoute,FromTo,Periods,SuppDem);
 
             %%% - End of Route1 - %%%
 
 
             %% - Determine Second Route - %%
-            %FromToDist  = xlsread('ShDistSimple.xlsm','A2:C13'); %determine distance from distance with penalty
+            %FromToDist  = xlsread(obj.excel_filename,strcat('A2:C', num2str(obj.excel_number_links))); %determine distance from distance with penalty
             % DoubleDist will double the distance of used routes
             DoubleDist = TrueDist(:,1) + TrueDist(:,1).*OnRoute1(:,1);
             % Write DoubleDist onto distance
-            xlswrite('ShDistSimple.xlsm',DoubleDist,'C2:C13')
+            xlswrite(obj.excel_filename,DoubleDist,strcat('C2:C', num2str(obj.excel_number_links)))
             % xlsread and write cannot be used while excel is running
 
 
             %% - Excel link - %%
             % Open file located in the current folder.
             ExcelApp = actxserver('Excel.Application'); % Show window.
-            openedWorkbook = ExcelApp.Workbooks.Open(fullfile(pwd,'\ShDistSimple.xlsm'));
+            openedWorkbook = ExcelApp.Workbooks.Open(fullfile(pwd,strcat('\', obj.excel_filename)));
             ExcelApp.Run('SolverMacro');    % run macro
             openedWorkbook.Save;    %save before closing excel
             ExcelApp.Quit;          %quit excel
@@ -127,9 +145,9 @@ classdef AirportClass < handle
             %% - End of link - %%
 
             % read shortest route after running solver
-            OnRoute     = xlsread('ShDistSimple.xlsm','D2:D13'); %read distance with penalties
+            OnRoute     = xlsread(obj.excel_filename,strcat('D2:D', num2str(obj.excel_number_links))); %read distance with penalties
             OnRoute2    = OnRoute; %define second route
-            TotalDist2   = xlsread('ShDistSimple.xlsm','F2:F2'); % read total distance
+            TotalDist2   = xlsread(obj.excel_filename,'F2:F2'); % read total distance
 
             %% - Define route 2 vector with time stamps - %%
             Route2 = RouteConvert(OnRoute,FromTo,Periods,SuppDem);
@@ -140,13 +158,13 @@ classdef AirportClass < handle
             % DoubleDist will double the distance of used routes again
             DoubleDist = TrueDist(:,1) + TrueDist(:,1).*OnRoute1(:,1)+ TrueDist(:,1).*OnRoute2;
             % Write DoubleDist onto used distance column
-            xlswrite('ShDistSimple.xlsm',DoubleDist,'C2:C13')
+            xlswrite(obj.excel_filename,DoubleDist,strcat('C2:C', num2str(obj.excel_number_links)))
 
 
             %% - Excel link - %%
             % Open file located in the current folder.
             ExcelApp = actxserver('Excel.Application'); % Show window.
-            openedWorkbook = ExcelApp.Workbooks.Open(fullfile(pwd,'\ShDistSimple.xlsm'));
+            openedWorkbook = ExcelApp.Workbooks.Open(fullfile(pwd,strcat('\', obj.excel_filename)));
             ExcelApp.Run('SolverMacro');    % run macro
             openedWorkbook.Save;    % save before closing excel
             ExcelApp.Quit;          % quit excel
@@ -154,9 +172,9 @@ classdef AirportClass < handle
             %% - End of link - %%
 
             % read shortest route after running solver
-            OnRoute     = xlsread('ShDistSimple.xlsm','D2:D13'); % read distance with penalties
+            OnRoute     = xlsread(obj.excel_filename,strcat('D2:D', num2str(obj.excel_number_links))); % read distance with penalties
             OnRoute3    = OnRoute; % define second route
-            TotalDist3  = xlsread('ShDistSimple.xlsm','F2:F2'); % read total distance
+            TotalDist3  = xlsread(obj.excel_filename,'F2:F2'); % read total distance
 
             %% - Define route 3 vector with time stamps
             Route3 = RouteConvert(OnRoute,FromTo,Periods,SuppDem);
@@ -169,6 +187,7 @@ classdef AirportClass < handle
             system('taskkill /F /IM EXCEL.EXE');
             
             disp(['calcShortestRoutes from ', num2str(n1), ' to ', num2str(n2), ' (end)']);
+            
         end % end function    
             
             

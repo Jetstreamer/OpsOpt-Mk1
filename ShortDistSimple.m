@@ -6,7 +6,7 @@
 
 
 
-function [Route1,Route2,Route3] = ShortDist(SuppDem)
+function [Route1,Route2,Route3] = ShortDist(SuppDem,speed)
 
 
 
@@ -42,7 +42,8 @@ TotalDist1   = xlsread('ShDistSimple.xlsm','F2:F2'); % read total distance
 
 %% - Define route 1 vector with time stamps - %%
 FromTo = xlsread('ShDistSimple.xlsm','A2:B61');
-Periods = xlsread('ShDistSimple.xlsm','G2:G61'); % grab aircraft periods
+Periods = xlsread('ShDistSimple.xlsm','E2:E61'); % grab aircraft periods
+Periods = Periods/(speed*10);
 Periods = ceil(Periods); % round up
 OnRoute = xlsread('ShDistSimple.xlsm','D2:D61');
 SuppDem = xlsread('ShDistSimple.xlsm','L2:L37');
