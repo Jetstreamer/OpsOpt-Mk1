@@ -54,6 +54,7 @@ classdef AirportClass < handle
         
         function [Route1,Route2,Route3] = calcShortestRoutes(obj,n1,n2)
             
+            disp(['calcShortestRoutes from ', num2str(n1), ' to ', num2str(n2), ' ...']);
             %SuppDem = zeros(size(obj.nodes));
             SuppDem = zeros(6,1);
             SuppDem(n1) = +1;
@@ -166,6 +167,8 @@ classdef AirportClass < handle
             % this will make you laugh, but i couldnt find another soultion to stop
             % excel running in the background
             system('taskkill /F /IM EXCEL.EXE');
+            
+            disp(['calcShortestRoutes from ', num2str(n1), ' to ', num2str(n2), ' (end)']);
         end % end function    
             
             
