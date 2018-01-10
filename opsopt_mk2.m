@@ -6,9 +6,9 @@ delta_t = 10; % seconds
 
 schedule = ScheduleClass;
 
-schedule.setupOneFlightSchedule();
+%schedule.setupOneFlightSchedule();
 %schedule.setupSimpleAirportSchedule();
-%schedule.setupRolingSchedule();
+schedule.setupRolingSchedule();
 
 lp_vars = schedule.lp_getCostFunction();
 
@@ -27,22 +27,25 @@ mxlpsolve('set_verbose', lp, 3);
 
 disp 'solve'
 mxlpsolve('set_obj_fn', lp, lp_vars);
+%mxlpsolve('get_objective', lp)
 
 
 %schedule.lp_setConstraintNO(lp);
-schedule.lp_setConstraintLO(lp);
+x4 = schedule.lp_setConstraintLO(lp);
+x3 = schedule.lp_setConstraintWT(lp);
+
 
 disp 'solve'
 mxlpsolve('solve', lp)
 
 disp 'get_objective'
-mxlpsolve('get_objective', lp)
+x1 = mxlpsolve('get_objective', lp)
 
 disp 'get_variables'
 resulting_vars = mxlpsolve('get_variables', lp)
 
 disp 'get_constraints'
-mxlpsolve('get_constraints', lp)
+x2 = mxlpsolve('get_constraints', lp)
 
 disp 'delete_lp'
 mxlpsolve('delete_lp', lp);

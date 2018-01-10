@@ -12,6 +12,7 @@ classdef FlightClass < handle
         time_early_pushback uint64
         delta_t = 10 % time period
         num_routes = 3;        % EXTEND USAGE
+        len_routes;
         %max_delay_periods = 3; % EXTEND USAGE
         
         routes_from_excel
@@ -162,6 +163,7 @@ classdef FlightClass < handle
             for r = 1:num_routes % the '3' routes
                 
                 [n_periods,dummy] = (size(obj.routes_from_excel{r})); % [13,1]
+                obj.len_routes = [obj.len_routes n_periods]; % save info for following methods
                 
                 for d = 1:obj.max_delay_periods % the '3' allowed delay bands
                     

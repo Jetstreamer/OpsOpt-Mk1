@@ -6,10 +6,17 @@ clc;
 lp=mxlpsolve('make_lp',0,4);
 mxlpsolve('add_constraint',lp,[3, 2, 2, 1],3,4);
 mxlpsolve('add_constraint',lp,[0, 4, 3, 1],2,3);
-mxlpsolve('set_obj_fn',lp,[2, 3, -2, 3]);
+wololo = [2, 3, -2, 3];
+mxlpsolve('set_obj_fn',lp,wololo);
+
 result=mxlpsolve('solve',lp)
 obj=mxlpsolve('get_objective', lp)
 x=mxlpsolve('get_variables', lp)
+
+%mxlpsolve('get_constraints', lp)
+
+werw = 1;
+
 pause;
 
 % Change a single element, and maximize
