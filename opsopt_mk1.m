@@ -226,7 +226,7 @@ for t = t_min:t_max
                 end
             end
         end
-
+        
         
         if (flights_on_the_node == 1)
             %disp (['at time ', num2str(t), ' there is 1 flight on node ', num2str(n), ', no constraint needed'])
