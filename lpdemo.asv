@@ -4,20 +4,16 @@ echo on
 
 clc;
 lp=mxlpsolve('make_lp',0,4);
-mxlpsolve('add_constraint',lp,[3, 2, 2, 1],3,4.4);
+mxlpsolve('add_constraint',lp,[3, 2, 2, 1],3,4);
 mxlpsolve('add_constraint',lp,[0, 4, 3, 1],2,3);
 wololo = [2, 3, -2, 3];
 mxlpsolve('set_obj_fn',lp,wololo);
+
 result=mxlpsolve('solve',lp)
 obj=mxlpsolve('get_objective', lp)
 x=mxlpsolve('get_variables', lp)
 
-[constr, nbnbnb] = mxlpsolve('get_constraints', lp);
-
 %mxlpsolve('get_constraints', lp)
-
-[constr_type] = mxlpsolve('get_constr_type', lp)
-
 
 werw = 1;
 

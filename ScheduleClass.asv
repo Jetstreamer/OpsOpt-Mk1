@@ -186,7 +186,7 @@ classdef ScheduleClass < handle
                     end
                     
                     disp(['lp_getConstraintNO(), adding constraints on node n.', num2str(i), ', time interval ', num2str(time_interval)]);
-                    
+                    %lp_vars = uint8(lp_vars);
                     %mxlpsolve('add_constraint', lp_handle, lp_vars, 1, 1); % le, ge, eq = 1,2,3            
                 end
             end
@@ -232,6 +232,8 @@ classdef ScheduleClass < handle
 
                        disp(['lp_setConstraintLO(), link n.', num2str(i), ' (nodes ', num2str(n1), '-', num2str(n2), ...
                            '), time ', num2str(time_interval), ', occupancy ', num2str(num_possible_conflicts)]);
+                       
+                       lp_vars = uint8(lp_vars);
                        mxlpsolve('add_constraint', lp_handle, lp_vars, 1, 1); % le, ge, eq = 1,2,3             
                        cnt1 = cnt1 + 1;
                     else
@@ -280,6 +282,7 @@ classdef ScheduleClass < handle
 
                         % add constraint
                         disp(['lp_setConstraintWT(), flight ', num2str(f), ', route ', num2str(r), ', segment ', num2str(s), ' and previous']);
+                        lp_vars = uint8(lp_vars);
                         mxlpsolve('add_constraint', lp_handle, lp_vars, 3, 0); % le, ge, eq = 1,2,3
                         cnt1 = cnt1 + 1;
 
@@ -308,9 +311,6 @@ classdef ScheduleClass < handle
                 [periods_in_routes,dummy] = cellfun(@size,obj.flights(f).routes_from_excel);
                 len_longest_route = max(periods_in_routes);
                 
-                
-                
-            
                 for segment_offset = 0:(len_longest_route-1)
                     
                     lp_vars = zeros(1,num_vars);
@@ -331,6 +331,7 @@ classdef ScheduleClass < handle
                     end
                     
                     disp(['lp_setConstraintRADC(), flight ', num2str(f), ', segment_offset ', num2str(segment_offset)]);
+                    lp_vars = uint8(lp_vars);
                     mxlpsolve('add_constraint', lp_handle, lp_vars, 3, 1); % le, ge, eq = 1,2,3
                     cnt1 = cnt1 + 1;
                 end % for segments
@@ -344,6 +345,57 @@ classdef ScheduleClass < handle
        
             y = cnt1;
         end % function     
+        
+        
+        %% 
+        function lp_decodeResults(obj, results)
+            
+            results = results.';
+            index = 1;
+            % time flows in same direction as the 'results' vector
+            
+            %F,D,R,S!!
+            
+            for f = 1:size(obj.flights,2)
+                disp(['lp_decodeResults(), flight ', num2str(f)]);
+                
+                %len_delay_block = sum(obj.flights(f).len_routes); % calculate length to be jumped across different delays.
+
+                for d = 1:obj.flights(f).max_delay_periods
+                    
+                    
+                    for r = 1:obj.flights(f).num_routes
+                        
+                        appo = obj.flights(f).routes_with_variations{r,d};
+                        
+                        for s = 1:obj.flights(f).len_routes(r)
+                            
+                            flag = results(index);
+                            node_or_link = appo{s,1}; 
+                             at_time = appo{s,2};
+                            
+                            if(flag > 0.5) % never trust the matlab 'integers'...                             
+                               
+                               disp(['flag ', num2str(flag), ' flight ', num2str(f), ' on node/link (', char(node_or_link), ') at time ', num2str(at_time), ' with delay ', num2str((d-1)*10), ' seconds']); 
+                            else
+                                disp(['flag ', num2str(flag), ' flight ', num2str(f), ', combination not selected: node/link (', char(node_or_link), '), time ', num2str(at_time), ', delay ', num2str((d-1)*10), ' seconds']); 
+                            end
+                            
+                            index = index + 1;
+                                
+                                
+                                
+                        end % segments
+                    end % routes
+                end % delays
+            end  % flights
+            
+            
+            
+            
+            
+            
+        end % function
     end
     
     end

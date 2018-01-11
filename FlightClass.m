@@ -4,16 +4,18 @@ classdef FlightClass < handle
         sequential uint64 % number 
         number string % string
         max_taxi_speed double % [m/s]
-        max_delay_periods % [-] number of periods of max delay
         node_origin uint64
         node_dest uint64
         time_origin uint64
         time_dest uint64
         time_early_pushback uint64
         delta_t = 10 % time period
-        num_routes = 3;        % EXTEND USAGE
         len_routes;
-        %max_delay_periods = 3; % EXTEND USAGE
+        
+        % CONFIGURE HERE
+        max_delay_periods = 1; % [-] number of periods of max delay
+        num_routes = 1;        % [-] number of alternative routes initially calculated
+        % CONFIGURE HERE
         
         routes_from_excel
         routes_with_variations % all routes/delays variations with time.
@@ -21,7 +23,7 @@ classdef FlightClass < handle
         lp_serialized_data % ready for LPsolver
         kf = 1 % LP cost parameters
         kr = 1 % LP cost parameters
-        kd = 1 % LP cost parameters
+        kd = 10 % LP cost parameters
     end
     
     
@@ -30,7 +32,7 @@ classdef FlightClass < handle
         %%
         function y = lp_calcRoutesCosts(obj)
             
-            [num_delays,num_routes] = size(obj.routes_with_variations); % read number of routes in memory
+            [num_routes,num_delays] = size(obj.routes_with_variations); % read number of routes in memory
             %ret = zeros(num_delays,num_routes);
             ret = [];
             index = 0;
@@ -50,7 +52,7 @@ classdef FlightClass < handle
         %%
         function y = lp_calcNumVars(obj)
             ret = 0;
-            [num_delays,num_routes] = size(obj.routes_with_variations); % read number of routes in memory
+            [num_routes,num_delays] = size(obj.routes_with_variations); % read number of routes in memory
             
             for d = 1:num_delays
                 for r = 1:num_routes
@@ -123,7 +125,6 @@ classdef FlightClass < handle
             obj.sequential = seq;
             obj.number = num;
             obj.max_taxi_speed = speed;
-            obj.max_delay_periods = 3; % fixed to 3 for now, maybe sensitivity analysis later on
         end
         
         %%
@@ -151,9 +152,19 @@ classdef FlightClass < handle
         %%
         function loadBasicRoutes(obj,r1,r2,r3)
             disp(['loadBasicRoutes, flight ',num2str(obj.sequential)]);
-            obj.routes_from_excel{1} = r1;
-            obj.routes_from_excel{2} = r2;
-            obj.routes_from_excel{3} = r3;
+            
+            if obj.num_routes > 0
+                obj.routes_from_excel{1} = r1; % consume 'shortest routes' as needed
+            end
+            
+            if obj.num_routes > 1
+                obj.routes_from_excel{2} = r2; % consume 'shortest routes' as needed
+            end
+            
+            if obj.num_routes > 2
+                obj.routes_from_excel{3} = r3; % consume 'shortest routes' as needed
+            end
+            
             obj.createRoutesVariations();
         end
         
