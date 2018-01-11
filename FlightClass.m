@@ -26,11 +26,8 @@ classdef FlightClass < handle
     
     
     methods
-        %function obj = FlightClass() % constructor
-            
-            
-        %end
         
+        %%
         function y = lp_calcRoutesCosts(obj)
             
             [num_delays,num_routes] = size(obj.routes_with_variations); % read number of routes in memory
@@ -50,6 +47,7 @@ classdef FlightClass < handle
             y = ret;
         end
         
+        %%
         function y = lp_calcNumVars(obj)
             ret = 0;
             [num_delays,num_routes] = size(obj.routes_with_variations); % read number of routes in memory
@@ -66,6 +64,7 @@ classdef FlightClass < handle
             y = ret;
         end
         
+        %%
         function y = lp_markLinkOccupancy(obj,n1,n2,time_interval)
             
             ret = zeros(1,obj.lp_calcNumVars());
@@ -118,6 +117,7 @@ classdef FlightClass < handle
             y = ret;
         end
             
+        %%
         function obj = setProperties(obj,seq,num,speed)
             %disp(['setProperties, flight ',num2str(seq)]);
             obj.sequential = seq;
@@ -126,6 +126,7 @@ classdef FlightClass < handle
             obj.max_delay_periods = 3; % fixed to 3 for now, maybe sensitivity analysis later on
         end
         
+        %%
         function obj = setNodesAndTimes(obj,n1,n2,t1,t2,tEarly)
             disp(['setNodesAndTimes, flight ',num2str(obj.sequential), ', t1 ', num2str(t1)]);
             obj.node_origin =n1;
@@ -135,16 +136,19 @@ classdef FlightClass < handle
             obj.time_early_pushback  = tEarly;
         end
         
+        %%
         function obj = updatePosition(obj,n,t)
             disp(['updatePosition, flight ',num2str(obj.sequential)]);
             obj.node_origin = n;            
             obj.time_origin = t;
         end
         
+        %%
         function y = getNum(obj)
             y = obj.number;
         end
         
+        %%
         function loadBasicRoutes(obj,r1,r2,r3)
             disp(['loadBasicRoutes, flight ',num2str(obj.sequential)]);
             obj.routes_from_excel{1} = r1;
@@ -153,12 +157,16 @@ classdef FlightClass < handle
             obj.createRoutesVariations();
         end
         
+        %% 
         function createRoutesVariations(obj)
             disp(['createRoutesVariations, flight ',num2str(obj.sequential)]);
             
             [dummy,num_routes] = size(obj.routes_from_excel); % read number of routes in memory
             obj.routes_with_variations = cell(num_routes, obj.max_delay_periods); % initialize 3x3 cell for routes/delays
             obj.num_decision_variables = 0;
+            
+            %[periods_in_routes,dummy] = cellfun(@size,obj.routes_from_excel);
+            %len_longest_route = max(periods_in_routes);
             
             for r = 1:num_routes % the '3' routes
                 

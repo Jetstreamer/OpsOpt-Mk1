@@ -11,6 +11,7 @@ classdef ScheduleClass < handle
            obj.flights = [obj.flights x]; 
         end
             
+        %%
         function obj = delFlight(obj,f)
             for index = 1:size(obj.flights,2)
                 if(obj.flights(index).sequential == f)
@@ -20,6 +21,7 @@ classdef ScheduleClass < handle
             end
         end 
         
+        %%
         function flight = getFlight(obj,f)
             for index = 1:size(obj.flights,2)
                 if(obj.flights(index).sequential == f)
@@ -29,6 +31,7 @@ classdef ScheduleClass < handle
             end
         end
         
+        %%
         function obj = updatePosition(obj,f,n,t)
             for index = 1:size(obj.flights,2)
                 if(obj.flights(index).sequential == f)
@@ -39,6 +42,7 @@ classdef ScheduleClass < handle
             end
         end
         
+        %%
         function setupRolingSchedule(obj)
             
             f1 = FlightClass; % I know, not the most efficient, but it's more clear later on.
@@ -98,6 +102,7 @@ classdef ScheduleClass < handle
             disp('setupRolingSchedule completed');
         end
         
+        %%
         function setupSimpleAirportSchedule(obj)    
             
             %airport = AirportClass;
@@ -127,6 +132,7 @@ classdef ScheduleClass < handle
             disp('setupSimpleAirportSchedule completed');
         end
         
+        %%
         function setupOneFlightSchedule(obj)    
             
             obj.airport.setupSimpleAirport();
@@ -141,6 +147,7 @@ classdef ScheduleClass < handle
             disp('setupOneFlightSchedule completed');            
         end
         
+        %%
         function y = lp_getCostFunction(obj)
             ret = []; % vector
             for f = 1:size(obj.flights,2)
@@ -150,6 +157,7 @@ classdef ScheduleClass < handle
             y = ret;
         end
         
+        %%
         function y = lp_calcNumVars(obj)
             num_vars = 0;
             for f = 1:size(obj.flights,2)
@@ -158,6 +166,7 @@ classdef ScheduleClass < handle
             y = num_vars;
         end
         
+        %%
         function lp_setConstraintNO(obj,lp_handle)
             
             num_vars = obj.lp_calcNumVars();
@@ -182,7 +191,8 @@ classdef ScheduleClass < handle
                 end
             end
         end
-            
+          
+        %%
         function y = lp_setConstraintLO(obj,lp_handle)
             
             num_vars = obj.lp_calcNumVars();
@@ -192,7 +202,7 @@ classdef ScheduleClass < handle
             for i = 1:length(obj.airport.links)
                 n1 = obj.airport.links(i,1);
                 n2 = obj.airport.links(i,2);
-                %disp(['lp_setConstraintLO(), link n.', num2str(i), ' (nodes ', num2str(n1), '-', num2str(n2), ')']);
+                disp(['lp_setConstraintLO(), link n.', num2str(i), ' (nodes ', num2str(n1), '-', num2str(n2), ')']);
   
                 for t = 0:1000 % roomy index
                     time_interval = t * obj.delta_t;
@@ -201,11 +211,11 @@ classdef ScheduleClass < handle
                         break
                     end
                     
-                    %disp(['lp_setConstraintLO(), link n.', num2str(i), ' (nodes ', num2str(n1), '-', num2str(n2), '), time ', num2str(time_interval)]);
+                    disp(['lp_setConstraintLO(), link n.', num2str(i), ' (nodes ', num2str(n1), '-', num2str(n2), '), time ', num2str(time_interval)]);
                     lp_vars = [];
                     
                     for f = 1:size(obj.flights,2)
-                        %disp(['lp_setConstraintLO(), link n.', num2str(i), ' (nodes ', num2str(n1), '-', num2str(n2), '), time ', num2str(time_interval), ', flight ', num2str(f)]);
+                        disp(['lp_setConstraintLO(), link n.', num2str(i), ' (nodes ', num2str(n1), '-', num2str(n2), '), time ', num2str(time_interval), ', flight ', num2str(f)]);
                         
                         %obj.flights(f).routes_with_variations
                         
@@ -216,7 +226,7 @@ classdef ScheduleClass < handle
                     end
                     
                     num_possible_conflicts = sum(lp_vars);
-                    % disp(['lp_setConstraintLO(), link n.', num2str(i), ' (nodes ', num2str(n1), '-', num2str(n2), '), time ', num2str(time_interval)]);
+                    %disp(['lp_setConstraintLO(), link n.', num2str(i), ' (nodes ', num2str(n1), '-', num2str(n2), '), time ', num2str(time_interval)]);
                     
                     if (num_possible_conflicts > 1)
 
@@ -237,7 +247,7 @@ classdef ScheduleClass < handle
             
         end % function
         
-        
+        %%
         function y = lp_setConstraintWT(obj,lp_handle)
 
             num_vars = obj.lp_calcNumVars();
@@ -269,7 +279,7 @@ classdef ScheduleClass < handle
                         end
 
                         % add constraint
-                        disp(['lp_setConstraintWT(), flight ', num2str(f), ', route ', num2str(r), ', segment ', num2str(s)]);
+                        disp(['lp_setConstraintWT(), flight ', num2str(f), ', route ', num2str(r), ', segment ', num2str(s), ' and previous']);
                         mxlpsolve('add_constraint', lp_handle, lp_vars, 3, 0); % le, ge, eq = 1,2,3
                         cnt1 = cnt1 + 1;
 
@@ -283,6 +293,57 @@ classdef ScheduleClass < handle
 
             y = cnt1;
         end % function
+        
+        
+        %% route and delay choice constraints
+        function y = lp_setConstraintRADC(obj, lp_handle)
+            cnt1 = 0;
+            
+            num_vars = obj.lp_calcNumVars();
+            index_current_flight = 1;
+
+            for f = 1:size(obj.flights,2)
+            
+                %num_segments = obj.flights(f).len_routes(r);
+                [periods_in_routes,dummy] = cellfun(@size,obj.flights(f).routes_from_excel);
+                len_longest_route = max(periods_in_routes);
+                
+                
+                
+            
+                for segment_offset = 0:(len_longest_route-1)
+                    
+                    lp_vars = zeros(1,num_vars);
+                    index = index_current_flight; % begin from start of 'flight' block, and again
+                    
+                    for d = 1:obj.flights(f).max_delay_periods % F,D,R,S
+                        
+                        for r = 1:obj.flights(f).num_routes
+                            
+                            if (segment_offset < obj.flights(f).len_routes(r)) % if current route is not maxed out (some are shorter, some longer)
+                                lp_vars(index + segment_offset) = 1; % mark as 1
+                            else
+                                lp_vars(index + obj.flights(f).len_routes(r) -1) = 1; % route is maxed-out, overwriting the last element
+                            end
+                            
+                            index = index + obj.flights(f).len_routes(r);
+                        end
+                    end
+                    
+                    disp(['lp_setConstraintRADC(), flight ', num2str(f), ', segment_offset ', num2str(segment_offset)]);
+                    mxlpsolve('add_constraint', lp_handle, lp_vars, 3, 1); % le, ge, eq = 1,2,3
+                    cnt1 = cnt1 + 1;
+                end % for segments
+                
+                
+                len_flight_block = obj.flights(f).lp_calcNumVars();
+                index_current_flight = index_current_flight + len_flight_block; % advance to beginning of next flight
+                
+            end % for flights
+            
+       
+            y = cnt1;
+        end % function     
     end
     
     end
